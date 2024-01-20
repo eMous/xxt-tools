@@ -1,0 +1,7 @@
+# copy this file to configuration.py and replace content with your own
+id = "你的id"
+pswd = "你的密码"
+
+# 可以不设置下面的，下面的用于调试
+i_course = -1
+i_class = -1  # -1 default
