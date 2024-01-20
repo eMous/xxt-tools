@@ -184,3 +184,8 @@ def complete_download():
 
 if __name__ == "__main__":
     complete_download()
+
+
+
+# https://mooc2-ans.chaoxing.com/mooc2-ans/mycourse/tch?courseid=227598892&clazzid=86590150&cpi=258675818&enc=a5f03716878a126f49f07c862b004830&t=1705766049981&pageHeader=8
+# TODO operation 2 通过统计下载
