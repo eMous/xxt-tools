@@ -173,7 +173,7 @@ def read_ini():
         pass
     
     
-def complete_download():
+def complete_download_brute():
     read_ini()
     init_driver()
     login()
@@ -181,9 +181,19 @@ def complete_download():
     choose_class()
     download()
 
+def complete_download_statistic():
+    read_ini()
+    init_driver()
+    login()
+    choose_course()
+    
+    
+    choose_class()
+    # https://stat2-ans.chaoxing.com/stat2/teach-data/export?clazzid=86590150&courseid=227598892&cpi=258675818&ut=t&pEnc=&seltables=1%2C2%2C3%2C4%2C5%2C6%2C7%2C8%2C9%2C10%2C11%2C12&type=1&exportType=0
+    download()
 
 if __name__ == "__main__":
-    complete_download()
+    complete_download_brute()
 
 
 
