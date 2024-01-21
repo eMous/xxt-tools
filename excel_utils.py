@@ -1,9 +1,12 @@
 
 import openpyxl
 from copy import copy
+from openpyxl import load_workbook
+
 
 def copy_sheet(source_sheet, target_sheet):
-    copy_cells(source_sheet, target_sheet)  # copy all the cel values and styles
+    # copy all the cel values and styles
+    copy_cells(source_sheet, target_sheet)
     copy_sheet_attributes(source_sheet, target_sheet)
 
 
@@ -22,15 +25,23 @@ def copy_sheet_attributes(source_sheet, target_sheet):
     if source_sheet.sheet_format.defaultColWidth is None:
         print('Unable to copy default column wide')
     else:
-        target_sheet.sheet_format.defaultColWidth = copy(source_sheet.sheet_format.defaultColWidth)
+        target_sheet.sheet_format.defaultColWidth = copy(
+            source_sheet.sheet_format.defaultColWidth)
 
     # set specific column width and hidden property
     # we cannot copy the entire column_dimensions attribute so we copy selected attributes
     for key, value in source_sheet.column_dimensions.items():
-        target_sheet.column_dimensions[key].min = copy(source_sheet.column_dimensions[key].min)   # Excel actually groups multiple columns under 1 key. Use the min max attribute to also group the columns in the targetSheet
-        target_sheet.column_dimensions[key].max = copy(source_sheet.column_dimensions[key].max)  # https://stackoverflow.com/questions/36417278/openpyxl-can-not-read-consecutive-hidden-columns discussed the issue. Note that this is also the case for the width, not onl;y the hidden property
-        target_sheet.column_dimensions[key].width = copy(source_sheet.column_dimensions[key].width) # set width for every column
-        target_sheet.column_dimensions[key].hidden = copy(source_sheet.column_dimensions[key].hidden)
+        # Excel actually groups multiple columns under 1 key. Use the min max attribute to also group the columns in the targetSheet
+        target_sheet.column_dimensions[key].min = copy(
+            source_sheet.column_dimensions[key].min)
+        # https://stackoverflow.com/questions/36417278/openpyxl-can-not-read-consecutive-hidden-columns discussed the issue. Note that this is also the case for the width, not onl;y the hidden property
+        target_sheet.column_dimensions[key].max = copy(
+            source_sheet.column_dimensions[key].max)
+        target_sheet.column_dimensions[key].width = copy(
+            # set width for every column
+            source_sheet.column_dimensions[key].width)
+        target_sheet.column_dimensions[key].hidden = copy(
+            source_sheet.column_dimensions[key].hidden)
 
 
 def copy_cells(source_sheet, target_sheet):
@@ -53,6 +64,53 @@ def copy_cells(source_sheet, target_sheet):
 
         if source_cell.comment:
             target_cell.comment = copy(source_cell.comment)
+
+
+def delete_row_with_merged_ranges(path, sheetname, idx):
+    # bug: you can not unmerge C3:C4 twice even though these are two objs, so I have to reload the sheet
+    wb = load_workbook(path)
+    sheet = wb[sheetname]
+
+    mcrs_to_remove = []
+    for mcr in sheet.merged_cells:
+        if idx == mcr.min_row:
+            mcrs_to_remove.append(mcr)
+
+    for mcr in mcrs_to_remove:
+        sheet.merged_cells.remove(mcr)
+    sheet.delete_cols(idx)
+
+    for mcr in sheet.merged_cells:
+        if idx < mcr.min_row:
+            mcr.shift(row_shift=-1)
+        elif idx <= mcr.max_row:
+            mcr.shrink(bottom=1)
+    wb.save(path)
+    return wb
+
+
+def delete_col_with_merged_ranges(path, sheetname, idx):
+    # bug: you can not unmerge C3:C4 twice even though these are two objs, so I have to reload the sheet
+    wb = load_workbook(path)
+    sheet = wb[sheetname]
+
+    mcrs_to_remove = []
+    for mcr in sheet.merged_cells:
+        if idx == mcr.min_col:
+            mcrs_to_remove.append(mcr)
+
+    for mcr in mcrs_to_remove:
+        sheet.merged_cells.remove(mcr)
+    sheet.delete_cols(idx)
+
+    for mcr in sheet.merged_cells:
+        if idx < mcr.min_col:
+            mcr.shift(col_shift=-1)
+        elif idx <= mcr.max_col:
+            mcr.shrink(right=1)
+    wb.save(path)
+    return wb
+
 
 if __name__ == '__main__':
     pass

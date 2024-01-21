@@ -5,7 +5,7 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment
 from openpyxl.utils import get_column_letter, column_index_from_string
 import numpy as np
-from excel_utils import copy_cells, copy_sheet
+from excel_utils import copy_cells, copy_sheet, delete_col_with_merged_ranges
 import shutil
 
 excel_dir = ""
@@ -25,7 +25,7 @@ def cr_cp_sheets_statistic(epath, path):
     wb = load_workbook(path) 
     ws = wb['作业统计']
     
-    copy_cells(ws,ews)
+    copy_sheet(ws,ews)
     
     
     ews = ewb.create_sheet('作业统计')
@@ -128,26 +128,30 @@ def get_epath(style):
 def create_summarysheet_statistic(epath: str):
 
     ewb = load_workbook(epath)
-    # copy sheet 作业统计 to sheet 成绩总表
+    st = ewb[estname]
+    assert (st["C3"].value == "学校")
+    ewb = delete_col_with_merged_ranges(epath, estname, column_index_from_string("C"))
 
     st = ewb[estname]
+    assert (st["C3"].value == "院系")
+    ewb = delete_col_with_merged_ranges(epath, estname, column_index_from_string("C"))
 
-    # remove row 1 and 2
-    st.delete_rows(1,2)
-    
-    assert (st["C1"].value == "学校")
-    st.delete_cols(column_index_from_string("C"))
-    assert (st["C1"].value == "院系")
-    st.delete_cols(column_index_from_string("C"))
-    assert (st["C1"].value == "专业")
-    st.delete_cols(column_index_from_string("C"))
+    st = ewb[estname]
+    assert (st["C3"].value == "专业")
+    ewb = delete_col_with_merged_ranges(epath, estname, column_index_from_string("C"))
+
+    st = ewb[estname]
     # print all cell value in row 4
-    for cell in st[2]:
+    for cell in st[4]:
+        # check cell has attribute col_idx
+        if(not hasattr(cell, "col_idx")):
+            continue
         if(cell.col_idx > 3):
             if(cell.value != "成绩"):
-                st.delete_cols(cell.col_idx)
-    
-    st.delete_rows(2)
+                # TODO st 会变化
+                delete_col_with_merged_ranges(epath, estname, cell.col_idx)
+    # reload ewb
+    ewb = load_workbook(epath) 
     ewb.save(epath)
 
 
