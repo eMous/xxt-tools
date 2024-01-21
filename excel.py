@@ -10,15 +10,29 @@ import shutil
 
 excel_dir = ""
 xlsname = f"学习通成绩 ({datetime.now().strftime("%Y_%m_%d %H_%M_%S")}).xlsx"
-# xlsname = f"学习通成绩 (2024_01_20 16_05_10).xlsx"
+#xlsname = f"学习通成绩 (2024_01_20 16_05_10).xlsx"
 estname = "成绩总表"
 
 
 def cr_cp_sheets_statistic(epath, path):
     if (os.path.exists(epath)):
         return
-    shutil.copyfile(path,epath)
+    # 创建空sheet
+    ewb = Workbook()
+    ews = ewb.active
+    ews.title = estname
+    
+    wb = load_workbook(path) 
+    ws = wb['作业统计']
+    
+    copy_cells(ws,ews)
+    
+    
+    ews = ewb.create_sheet('作业统计')
+    copy_sheet(ws,ews)
+        
 
+    ewb.save(epath)
 
 def cr_cp_sheets_hwstyle(epath, paths):
     if (os.path.exists(epath)):
@@ -116,29 +130,25 @@ def create_summarysheet_statistic(epath: str):
     ewb = load_workbook(epath)
     # copy sheet 作业统计 to sheet 成绩总表
 
-    st = ewb.create_sheet(estname)
-    pos = ewb.worksheets.index(st)
-    newpos = 0
+    st = ewb[estname]
 
-    ewb.move_sheet(st, -(len(ewb.worksheets)-1))
-    copy_cells(ewb["作业统计"], st)
-
-   
-    assert (st["C3"].value == "学校")
-    # remove column C
-    st.delete_cols(column_index_from_string("C"))
-    # assert (st["C3"].value == "院系")
-    # st.delete_cols(column_index_from_string("C"))
-    # assert (st["C3"].value == "专业")
-    # st.delete_cols(column_index_from_string("C"))
-    # print all cell value in row 4
-    # for cell in st[4]:
-    #     if(cell.col_idx > 3):
-    #         if(cell.value != "成绩"):
-    #             st.delete_cols(cell.col_idx)
+    # remove row 1 and 2
+    st.delete_rows(1,2)
     
+    assert (st["C1"].value == "学校")
+    st.delete_cols(column_index_from_string("C"))
+    assert (st["C1"].value == "院系")
+    st.delete_cols(column_index_from_string("C"))
+    assert (st["C1"].value == "专业")
+    st.delete_cols(column_index_from_string("C"))
+    # print all cell value in row 4
+    for cell in st[2]:
+        if(cell.col_idx > 3):
+            if(cell.value != "成绩"):
+                st.delete_cols(cell.col_idx)
+    
+    st.delete_rows(2)
     ewb.save(epath)
-    pass
 
 
 def complete_excel_task_statistic():
@@ -149,6 +159,7 @@ def complete_excel_task_statistic():
             "学习通成绩")] + f"{path.name[:path.name.index("_统计一键导出")]}_" + epath[epath.index("学习通成绩"):]
         cr_cp_sheets_statistic(epath, path)
         create_summarysheet_statistic(epath)
+        format_summarysheet(epath)
 
 
 def complete_excel_task_hwstyle():
