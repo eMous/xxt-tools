@@ -1,30 +1,30 @@
 import pandas as pd
 import os
 from datetime import datetime
-from openpyxl import load_workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment
 from openpyxl.utils import get_column_letter, column_index_from_string
 import numpy as np
+from excel_utils import copy_cells, copy_sheet
+import shutil
 
-
-
-
-
-hw_dir = r"C:\Users\tom\Downloads"
+excel_dir = ""
 xlsname = f"学习通成绩 ({datetime.now().strftime("%Y_%m_%d %H_%M_%S")}).xlsx"
-xlsname = f"学习通成绩 (2024_01_20 16_05_10).xlsx"
+# xlsname = f"学习通成绩 (2024_01_20 16_05_10).xlsx"
 estname = "成绩总表"
-epath = os.path.join(r"C:\Users\tom\Desktop", xlsname)
-fortest_existfile = True
-if (not os.path.exists(epath)):
+
+
+def cr_cp_sheets_statistic(epath, path):
+    if (os.path.exists(epath)):
+        return
+    shutil.copyfile(path,epath)
+
+
+def cr_cp_sheets_hwstyle(epath, paths):
+    if (os.path.exists(epath)):
+        return
     pd.DataFrame().to_excel(epath, sheet_name=estname, index=False)
-    fortest_existfile = False
 
-hw_fpaths = [entry for entry in os.scandir(hw_dir) if entry.name.endswith(
-    'xlsx') or entry.name.endswith('.xls')]
-
-
-def cp_sheets(paths):
     dfs_from = [pd.read_excel(path, sheet_name=0) for path in paths]
     stnames_from = [list(pd.read_excel(path, sheet_name=None).keys())[
         0] for path in paths]
@@ -78,11 +78,84 @@ def sort_df(paths):
     returndfs = sorted(dfs, key=lambda x: x[1])
     return returndfs
 
+# get valid paths of excel files
 
-def start():
-    if not fortest_existfile:
-        cp_sheets(hw_fpaths)
-    create_summarysheet(epath)
+
+def get_paths(style: str):
+    paths = []
+    if (excel_dir == ""):
+        return []
+    if (not os.path.exists(excel_dir)):
+        return []
+
+    if (style == "hw"):
+        paths = [entry for entry in os.scandir(excel_dir) if (entry.name.endswith(
+            'xlsx') or entry.name.endswith('.xls')) and "学习通成绩" not in entry.name and ("一键导出" not in entry.name)]
+    elif (style == "statistic"):
+        paths = [entry for entry in os.scandir(excel_dir) if (entry.name.endswith(
+            'xlsx') or entry.name.endswith('.xls')) and "学习通成绩" not in entry.name and ("一键导出" in entry.name)]
+    else:
+        raise RuntimeError("style must be hw or statistic")
+    return paths
+
+
+def get_epath(style):
+    global excel_dir
+    while True:
+        paths = get_paths(style)
+        if (len(paths) > 0):
+            break
+        else:
+            excel_dir = input(f"当前查找excel的路径为{excel_dir}, 未找到导出数据，请重新设置路径:")
+    epath = os.path.join(excel_dir, xlsname)
+    return epath, paths
+
+
+def create_summarysheet_statistic(epath: str):
+
+    ewb = load_workbook(epath)
+    # copy sheet 作业统计 to sheet 成绩总表
+
+    st = ewb.create_sheet(estname)
+    pos = ewb.worksheets.index(st)
+    newpos = 0
+
+    ewb.move_sheet(st, -(len(ewb.worksheets)-1))
+    copy_cells(ewb["作业统计"], st)
+
+   
+    assert (st["C3"].value == "学校")
+    # remove column C
+    st.delete_cols(column_index_from_string("C"))
+    # assert (st["C3"].value == "院系")
+    # st.delete_cols(column_index_from_string("C"))
+    # assert (st["C3"].value == "专业")
+    # st.delete_cols(column_index_from_string("C"))
+    # print all cell value in row 4
+    # for cell in st[4]:
+    #     if(cell.col_idx > 3):
+    #         if(cell.value != "成绩"):
+    #             st.delete_cols(cell.col_idx)
+    
+    ewb.save(epath)
+    pass
+
+
+def complete_excel_task_statistic():
+    read_ini()
+    epath, paths = get_epath("statistic")
+    for path in paths:
+        epath = epath[:epath.index(
+            "学习通成绩")] + f"{path.name[:path.name.index("_统计一键导出")]}_" + epath[epath.index("学习通成绩"):]
+        cr_cp_sheets_statistic(epath, path)
+        create_summarysheet_statistic(epath)
+
+
+def complete_excel_task_hwstyle():
+    read_ini()
+    epath, paths = get_epath("hw")
+    cr_cp_sheets_hwstyle(epath, paths)
+    create_summarysheet_hwstyle(epath)
     format_summarysheet(epath)
 
 
@@ -101,7 +174,7 @@ def format_summarysheet(epath: str):
     wb.save(epath)
 
 
-def create_summarysheet(epath: str):
+def create_summarysheet_hwstyle(epath: str):
     # 创建班级；学号；姓名 列 （从第一个sheet拷贝过来）
     stnames = pd.ExcelFile(epath).sheet_names
     assert (len(stnames) > 1)
@@ -150,5 +223,18 @@ def create_summarysheet(epath: str):
     wb.save(epath)
 
 
+def read_ini():
+    global excel_dir
+    try:
+        import configuration
+        confs = {k: v for k, v in configuration.__dict__.items()
+                 if not k.startswith("_")}
+        for k, v in confs.items():
+            globals()[k] = v
+    except:
+        pass
+
+
 if __name__ == "__main__":
-    start()
+    # complete_excel_task_hwstyle()
+    complete_excel_task_statistic()

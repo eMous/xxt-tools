@@ -1,6 +1,8 @@
 # copy this file to configuration.py and replace content with your own
 id = "你的id"
 pswd = "你的密码"
+download_dir = r"\"
+excel_dir = r"\"
 
 # 可以不设置下面的，下面的用于调试
 i_course = -1
