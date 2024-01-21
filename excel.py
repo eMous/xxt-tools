@@ -5,7 +5,7 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment
 from openpyxl.utils import get_column_letter, column_index_from_string
 import numpy as np
-from excel_utils import copy_cells, copy_sheet, delete_col_with_merged_ranges
+from excel_utils import copy_cells, copy_sheet, delete_col_with_merged_ranges, delete_row_with_merged_ranges
 import shutil
 
 excel_dir = ""
@@ -130,17 +130,14 @@ def create_summarysheet_statistic(epath: str):
     ewb = load_workbook(epath)
     st = ewb[estname]
     assert (st["C3"].value == "学校")
-    ewb = delete_col_with_merged_ranges(epath, estname, column_index_from_string("C"))
+    delete_col_with_merged_ranges(st,column_index_from_string("C"))
 
-    st = ewb[estname]
     assert (st["C3"].value == "院系")
-    ewb = delete_col_with_merged_ranges(epath, estname, column_index_from_string("C"))
+    delete_col_with_merged_ranges(st,column_index_from_string("C"))
 
-    st = ewb[estname]
     assert (st["C3"].value == "专业")
-    ewb = delete_col_with_merged_ranges(epath, estname, column_index_from_string("C"))
+    delete_col_with_merged_ranges(st,column_index_from_string("C"))
 
-    st = ewb[estname]
     # print all cell value in row 4
     for cell in st[4]:
         # check cell has attribute col_idx
@@ -148,10 +145,11 @@ def create_summarysheet_statistic(epath: str):
             continue
         if(cell.col_idx > 3):
             if(cell.value != "成绩"):
-                # TODO st 会变化
-                delete_col_with_merged_ranges(epath, estname, cell.col_idx)
-    # reload ewb
-    ewb = load_workbook(epath) 
+                delete_col_with_merged_ranges(st, cell.col_idx)
+                
+    delete_row_with_merged_ranges(st,4)
+    # TODO 让第三行高度自动撑开
+    
     ewb.save(epath)
 
 
@@ -179,7 +177,9 @@ def format_summarysheet(epath: str):
     esheet = wb[estname]
 
     for column in esheet.columns:
-        esheet.column_dimensions[column[0].column_letter].width = 12
+        if(not hasattr(column[5],"column_letter")):
+            continue
+        esheet.column_dimensions[column[5].column_letter].width = 20
 
     align = Alignment(wrap_text=True, horizontal='center', vertical='center')
     for row in esheet.iter_rows(min_row=1, max_row=esheet.max_row, min_col=1, max_col=esheet.max_column):

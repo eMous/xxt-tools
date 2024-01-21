@@ -2,7 +2,7 @@
 import openpyxl
 from copy import copy
 from openpyxl import load_workbook
-
+from openpyxl.worksheet.worksheet import Worksheet
 
 def copy_sheet(source_sheet, target_sheet):
     # copy all the cel values and styles
@@ -66,41 +66,43 @@ def copy_cells(source_sheet, target_sheet):
             target_cell.comment = copy(source_cell.comment)
 
 
-def delete_row_with_merged_ranges(path, sheetname, idx):
-    # bug: you can not unmerge C3:C4 twice even though these are two objs, so I have to reload the sheet
-    wb = load_workbook(path)
-    sheet = wb[sheetname]
-
+def delete_row_with_merged_ranges(sheet:Worksheet, idx):
     mcrs_to_remove = []
     for mcr in sheet.merged_cells:
         if idx == mcr.min_row:
             mcrs_to_remove.append(mcr)
-
+            
     for mcr in mcrs_to_remove:
-        sheet.merged_cells.remove(mcr)
-    sheet.delete_cols(idx)
+        _remove_mcr_hack(sheet,mcr)
+    sheet.delete_rows(idx)
 
     for mcr in sheet.merged_cells:
         if idx < mcr.min_row:
-            mcr.shift(row_shift=-1)
+           mcr.shift(row_shift=-1)
         elif idx <= mcr.max_row:
             mcr.shrink(bottom=1)
-    wb.save(path)
-    return wb
 
 
-def delete_col_with_merged_ranges(path, sheetname, idx):
-    # bug: you can not unmerge C3:C4 twice even though these are two objs, so I have to reload the sheet
-    wb = load_workbook(path)
-    sheet = wb[sheetname]
+def _remove_mcr_hack(sheet:Worksheet, mcr):
+    # bug: you can not unmerge C3:C4 twice even though these are two objs
+    keep_to_add = []
+    while len(sheet.merged_cells.ranges) > 0:
+        mcr2 = sheet.merged_cells.ranges.pop()
+        if mcr != mcr2:
+            keep_to_add.append(mcr2)
+        else:
+            break
+    for mcr2 in keep_to_add:
+       sheet.merged_cells.ranges.add(mcr2) 
+    
 
+def delete_col_with_merged_ranges(sheet:Worksheet, idx):
     mcrs_to_remove = []
     for mcr in sheet.merged_cells:
         if idx == mcr.min_col:
             mcrs_to_remove.append(mcr)
-
     for mcr in mcrs_to_remove:
-        sheet.merged_cells.remove(mcr)
+        _remove_mcr_hack(sheet,mcr)
     sheet.delete_cols(idx)
 
     for mcr in sheet.merged_cells:
@@ -108,8 +110,6 @@ def delete_col_with_merged_ranges(path, sheetname, idx):
             mcr.shift(col_shift=-1)
         elif idx <= mcr.max_col:
             mcr.shrink(right=1)
-    wb.save(path)
-    return wb
 
 
 if __name__ == '__main__':
