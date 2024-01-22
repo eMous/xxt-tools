@@ -1,0 +1,28 @@
+/* make table#tb fixed to right window, height max, backgournd color pink */
+#tb {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 20%;
+    z-index: 9999;
+    background-color: pink;
+    border: 2px solid black;
+
+    display: flex;
+    flex-direction: column;
+}
+#btns_div{
+    /* 贴在父元素的底部 */
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#rows_div{
+    flex-grow: 1;
+}
