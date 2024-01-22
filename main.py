@@ -11,9 +11,7 @@ if __name__ == "__main__":
         print("(3) 【Excel】处理通过作业页面下载的作业数据文")
         print("(4) 【Excel】处理通过统计页面下载的官方统计文件【推荐】")
 
-        operation = 4
-        # 创建一个列表 [1,2,3,4...100]
-
+        operation = -1
         while operation not in range(1, 5):
             try:
                 operation = int(input("你的选择是："))
@@ -30,5 +28,4 @@ if __name__ == "__main__":
            complete_excel_task_hwstyle()
         elif operation == 4:
            complete_excel_task_statistic()
-           break
 

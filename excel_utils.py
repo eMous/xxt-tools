@@ -9,7 +9,6 @@ def copy_sheet(source_sheet, target_sheet):
     copy_cells(source_sheet, target_sheet)
     copy_sheet_attributes(source_sheet, target_sheet)
 
-
 def copy_sheet_attributes(source_sheet, target_sheet):
     target_sheet.sheet_format = copy(source_sheet.sheet_format)
     target_sheet.sheet_properties = copy(source_sheet.sheet_properties)
@@ -43,7 +42,6 @@ def copy_sheet_attributes(source_sheet, target_sheet):
         target_sheet.column_dimensions[key].hidden = copy(
             source_sheet.column_dimensions[key].hidden)
 
-
 def copy_cells(source_sheet, target_sheet):
     for (row, col), source_cell in source_sheet._cells.items():
         target_cell = target_sheet.cell(column=col, row=row)
@@ -65,7 +63,6 @@ def copy_cells(source_sheet, target_sheet):
         if source_cell.comment:
             target_cell.comment = copy(source_cell.comment)
 
-
 def delete_row_with_merged_ranges(sheet:Worksheet, idx):
     mcrs_to_remove = []
     for mcr in sheet.merged_cells:
@@ -82,20 +79,6 @@ def delete_row_with_merged_ranges(sheet:Worksheet, idx):
         elif idx <= mcr.max_row:
             mcr.shrink(bottom=1)
 
-
-def _remove_mcr_hack(sheet:Worksheet, mcr):
-    # bug: you can not unmerge C3:C4 twice even though these are two objs
-    keep_to_add = []
-    while len(sheet.merged_cells.ranges) > 0:
-        mcr2 = sheet.merged_cells.ranges.pop()
-        if mcr != mcr2:
-            keep_to_add.append(mcr2)
-        else:
-            break
-    for mcr2 in keep_to_add:
-       sheet.merged_cells.ranges.add(mcr2) 
-    
-
 def delete_col_with_merged_ranges(sheet:Worksheet, idx):
     mcrs_to_remove = []
     for mcr in sheet.merged_cells:
@@ -111,6 +94,17 @@ def delete_col_with_merged_ranges(sheet:Worksheet, idx):
         elif idx <= mcr.max_col:
             mcr.shrink(right=1)
 
+def _remove_mcr_hack(sheet:Worksheet, mcr):
+    # bug: you can not unmerge C3:C4 twice even though these are two objs
+    keep_to_add = []
+    while len(sheet.merged_cells.ranges) > 0:
+        mcr2 = sheet.merged_cells.ranges.pop()
+        if mcr != mcr2:
+            keep_to_add.append(mcr2)
+        else:
+            break
+    for mcr2 in keep_to_add:
+       sheet.merged_cells.ranges.add(mcr2) 
 
 if __name__ == '__main__':
     pass

@@ -7,11 +7,20 @@ from openpyxl.utils import get_column_letter, column_index_from_string
 import numpy as np
 from excel_utils import copy_cells, copy_sheet, delete_col_with_merged_ranges, delete_row_with_merged_ranges
 import shutil
+from openpyxl.worksheet.datavalidation import DataValidation
+from openpyxl import formatting, styles, Workbook
+import warnings
+warnings.simplefilter("ignore")
 
 excel_dir = ""
-xlsname = f"学习通成绩 ({datetime.now().strftime("%Y_%m_%d %H_%M_%S")}).xlsx"
-#xlsname = f"学习通成绩 (2024_01_20 16_05_10).xlsx"
+# xlsname = f"学习通成绩 ({datetime.now().strftime("%Y_%m_%d %H_%M_%S")}).xlsx"
+# xlsname = f"学习通成绩 (2024_01_20 16_05_10).xlsx"
 estname = "成绩总表"
+
+
+def get_xls_name():
+    global xlsname
+    xlsname = f"学习通成绩 ({datetime.now().strftime("%Y_%m_%d %H_%M_%S")}).xlsx"
 
 
 def cr_cp_sheets_statistic(epath, path):
@@ -21,25 +30,25 @@ def cr_cp_sheets_statistic(epath, path):
     ewb = Workbook()
     ews = ewb.active
     ews.title = estname
-    
-    wb = load_workbook(path) 
+
+    wb = load_workbook(path)
     ws = wb['作业统计']
-    
-    copy_sheet(ws,ews)
-    
-    
+
+    copy_sheet(ws, ews)
+
     ews = ewb.create_sheet('作业统计')
-    copy_sheet(ws,ews)
-        
+    copy_sheet(ws, ews)
 
     ewb.save(epath)
+
 
 def cr_cp_sheets_hwstyle(epath, paths):
     if (os.path.exists(epath)):
         return
     pd.DataFrame().to_excel(epath, sheet_name=estname, index=False)
 
-    dfs_from = [pd.read_excel(path, sheet_name=0) for path in paths]
+    dfs_from = [pd.read_excel(path, sheet_name=0, engine="openpyxl")
+                for path in paths]
     stnames_from = [list(pd.read_excel(path, sheet_name=None).keys())[
         0] for path in paths]
 
@@ -130,30 +139,30 @@ def create_summarysheet_statistic(epath: str):
     ewb = load_workbook(epath)
     st = ewb[estname]
     assert (st["C3"].value == "学校")
-    delete_col_with_merged_ranges(st,column_index_from_string("C"))
+    delete_col_with_merged_ranges(st, column_index_from_string("C"))
 
     assert (st["C3"].value == "院系")
-    delete_col_with_merged_ranges(st,column_index_from_string("C"))
+    delete_col_with_merged_ranges(st, column_index_from_string("C"))
 
     assert (st["C3"].value == "专业")
-    delete_col_with_merged_ranges(st,column_index_from_string("C"))
+    delete_col_with_merged_ranges(st, column_index_from_string("C"))
 
     # print all cell value in row 4
     for cell in st[4]:
         # check cell has attribute col_idx
-        if(not hasattr(cell, "col_idx")):
+        if (not hasattr(cell, "col_idx")):
             continue
-        if(cell.col_idx > 3):
-            if(cell.value != "成绩"):
+        if (cell.col_idx > 3):
+            if (cell.value != "成绩"):
                 delete_col_with_merged_ranges(st, cell.col_idx)
-                
-    delete_row_with_merged_ranges(st,4)
-    # TODO 让第三行高度自动撑开
-    
+
+    delete_row_with_merged_ranges(st, 4)
     ewb.save(epath)
 
 
 def complete_excel_task_statistic():
+    get_xls_name()
+
     read_ini()
     epath, paths = get_epath("statistic")
     for path in paths:
@@ -161,30 +170,185 @@ def complete_excel_task_statistic():
             "学习通成绩")] + f"{path.name[:path.name.index("_统计一键导出")]}_" + epath[epath.index("学习通成绩"):]
         cr_cp_sheets_statistic(epath, path)
         create_summarysheet_statistic(epath)
-        format_summarysheet(epath)
+        format_summarysheet(epath, "statistic")
 
 
 def complete_excel_task_hwstyle():
+    get_xls_name()
+
     read_ini()
     epath, paths = get_epath("hw")
     cr_cp_sheets_hwstyle(epath, paths)
     create_summarysheet_hwstyle(epath)
-    format_summarysheet(epath)
+    format_summarysheet(epath, "hw")
 
 
-def format_summarysheet(epath: str):
+def format_summarysheet_hwstyle(epath: str):
     wb = load_workbook(epath)
-    esheet = wb[estname]
+    ws = wb[estname]
 
-    for column in esheet.columns:
-        if(not hasattr(column[5],"column_letter")):
+    delete_row_with_merged_ranges(ws, 2)
+
+    for column in ws.columns:
+        if (not hasattr(column[5], "column_letter")):
             continue
-        esheet.column_dimensions[column[5].column_letter].width = 20
+        ws.column_dimensions[column[5].column_letter].width = 20
 
     align = Alignment(wrap_text=True, horizontal='center', vertical='center')
-    for row in esheet.iter_rows(min_row=1, max_row=esheet.max_row, min_col=1, max_col=esheet.max_column):
+    for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
         for cell in row:
             cell.alignment = align
+
+    # set row 3 to 20 height
+    ws.row_dimensions[3].height = 50
+    for i in range(4, ws.max_row+1):
+        ws.row_dimensions[i].height = 20
+
+    # 冻结窗口
+    ws.freeze_panes = ws['B2']
+
+    # 补0
+    minicell = 'D2'
+    maxicell = f"{get_column_letter(ws.max_column)}{ws.max_row}"
+    score_cells = ws[minicell:maxicell]
+    # iterate ws from range B4:S28
+    for row in score_cells:
+        for cell in row:
+            if cell.value == None:
+                cell.value = 0
+            if cell.value == int(cell.value):
+                cell.number_format = '0'
+            else:
+                cell.number_format = '0.00'
+
+    # 条件格式
+    red_color = 'ffc7ce'
+    red_color_font = 'ff0000'
+    red_font = styles.Font(color=red_color_font)
+    red_fill = styles.PatternFill(
+        start_color=red_color, end_color=red_color, fill_type='solid')
+    rule = formatting.rule.CellIsRule(operator='lessThan', formula=[
+                                      '60'], fill=red_fill)
+    ws.conditional_formatting.add(f"{minicell}:{maxicell}", rule)
+    # ws.conditional_formatting.add('B4:S28', formatting.rule.ColorScaleRule(start_type='num', start_value=0, start_color='00FF0000',
+    #     end_type='num', end_value=60, end_color='00FFFFFF'
+    # ))
+
+    wb.save(epath)
+
+
+def format_summarysheet(epath: str, style: str):
+
+    wb = load_workbook(epath)
+    ws = wb[estname]
+
+    if style == "hw":
+        delete_row_with_merged_ranges(ws, 2)
+
+    for column in ws.columns:
+        if (not hasattr(column[5], "column_letter")):
+            continue
+        ws.column_dimensions[column[5].column_letter].width = 17
+
+    align = Alignment(wrap_text=True, horizontal='center', vertical='center')
+    for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
+        for cell in row:
+            cell.alignment = align
+
+    # set row 3 to 20 height
+    ws.row_dimensions[3].height = 50
+    for i in range(4, ws.max_row+1):
+        ws.row_dimensions[i].height = 20
+
+    # 冻结窗口
+    first_score_row = -1
+    if style == "hw":
+        first_score_row = 2
+    elif style == "statistic":
+        first_score_row = 4
+    else:
+        raise RuntimeError("style must be hw or statistic")
+
+    ws.freeze_panes = ws[f"B{first_score_row}"]
+
+    # 补0
+    minicell = f"D{first_score_row}"
+    maxicell = f"{get_column_letter(ws.max_column)}{ws.max_row}"
+    score_cells = ws[minicell:maxicell]
+    # iterate ws from range B4:S28
+    for row in score_cells:
+        for cell in row:
+            if cell.value == None:
+                cell.value = 0
+            if cell.value == int(cell.value):
+                cell.number_format = '0'
+            else:
+                cell.number_format = '0.00'
+
+    # 条件格式
+    red_color = 'ffc7ce'
+    red_color_font = 'ff0000'
+    red_font = styles.Font(color=red_color_font)
+    red_fill = styles.PatternFill(
+        start_color=red_color, end_color=red_color, fill_type='solid')
+    rule = formatting.rule.CellIsRule(operator='lessThan', formula=[
+                                      '60'], fill=red_fill)
+    ws.conditional_formatting.add(f"{minicell}:{maxicell}", rule)
+    # ws.conditional_formatting.add('B4:S28', formatting.rule.ColorScaleRule(start_type='num', start_value=0, start_color='00FF0000',
+    #     end_type='num', end_value=60, end_color='00FFFFFF'
+    # ))
+
+    wb.save(epath)
+
+
+def format_summarysheet_statistic(epath: str):
+    wb = load_workbook(epath)
+    ws = wb[estname]
+
+    for column in ws.columns:
+        if (not hasattr(column[5], "column_letter")):
+            continue
+        ws.column_dimensions[column[5].column_letter].width = 17
+
+    align = Alignment(wrap_text=True, horizontal='center', vertical='center')
+    for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
+        for cell in row:
+            cell.alignment = align
+
+    # set row 3 to 20 height
+    ws.row_dimensions[3].height = 50
+    for i in range(4, ws.max_row+1):
+        ws.row_dimensions[i].height = 20
+
+    # 冻结窗口
+    ws.freeze_panes = ws['B4']
+
+    # 补0
+    minicell = 'D4'
+    maxicell = f"{get_column_letter(ws.max_column)}{ws.max_row}"
+    score_cells = ws[minicell:maxicell]
+    # iterate ws from range B4:S28
+    for row in score_cells:
+        for cell in row:
+            if cell.value == None:
+                cell.value = 0
+            if cell.value == int(cell.value):
+                cell.number_format = '0'
+            else:
+                cell.number_format = '0.00'
+
+    # 条件格式
+    red_color = 'ffc7ce'
+    red_color_font = 'ff0000'
+    red_font = styles.Font(color=red_color_font)
+    red_fill = styles.PatternFill(
+        start_color=red_color, end_color=red_color, fill_type='solid')
+    rule = formatting.rule.CellIsRule(operator='lessThan', formula=[
+                                      '60'], fill=red_fill)
+    ws.conditional_formatting.add(f"{minicell}:{maxicell}", rule)
+    # ws.conditional_formatting.add('B4:S28', formatting.rule.ColorScaleRule(start_type='num', start_value=0, start_color='00FF0000',
+    #     end_type='num', end_value=60, end_color='00FFFFFF'
+    # ))
 
     wb.save(epath)
 
