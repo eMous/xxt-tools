@@ -115,6 +115,12 @@ window.onload = function () {
     }
     function rerenderComment() {
       let body = document.body;
+      // find all rowdiv
+      let row_divs = body.querySelectorAll("#rows_div .row_div");
+      for(let i = 0; i < row_divs.length && i < window.t_comment_keys.length; i++){
+        let row_div = row_divs[i];
+        row_div.querySelector(".shortcut_div").textContent = `(${window.t_comment_keys[i]})`
+      }
       // find all content_div that the rowdiv has t_selected class
       let selected_content_divs = body.querySelectorAll(
         ".content_div.t_selected"
@@ -139,14 +145,13 @@ window.onload = function () {
       tacontent = tacontent.replace(/\n/g, '</p><p>').replace(/ /g, '&nbsp;');
       tacontent = "<p>"  + tacontent + "</p>"
       // 将 tacontent 加到body里
-      let div = document.createElement("div")
-
-      div.innerHTML = tacontent
-      body.appendChild(div)
-      
-      console.log(tacontent)
-      // find ta in xxt
-      // todo : https://stackoverflow.com/questions/2388164/set-focus-on-div-contenteditable-element
+      let iframe = document.body.querySelector("#ueditor_0")
+      if(iframe == null){
+        console.log("iframe #ueditor_0 is null")
+        return;
+      }
+      iframe.contentDocument.body.innerHTML = tacontent;
+      // if need to focus: https://stackoverflow.com/questions/2388164/set-focus-on-div-contenteditable-element
     }
 
     function confirmModify(event) {
