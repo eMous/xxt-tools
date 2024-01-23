@@ -1,28 +1,91 @@
 /* make table#tb fixed to right window, height max, backgournd color pink */
 #tb {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 400px;
+  z-index: 9999;
+  background-color: pink;
+  border: 2px solid black;
+
+  display: flex;
+  flex-direction: column;
+}
+#btns_div {
+  /* bottom: 0; */
+  width: 100%;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#rows_div {
+  width: 100%;
+  flex: 1;
+  overflow: auto;
+}
+.row_div {
+  width: max-content;
+  height: 30px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+}
+.row_div:not(:first-child) {
+  border-top: 1px double gray;
+}
+
+.row_div:last-of-type {
+  border-bottom: 1px double gray;
+}
+.remove_btn {
+  flex: none;
+  text-align: center;
+  /* margin-left: 2px; */
+  /* margin-right: 2px; */
+  width: 30px;
+}
+.remove_btn button {
+  /* margin: 0; */
+  background-color: #a5ccd9;
+  border: dotted;
+  /* color: white; */
+
+  text-align: center;
+  /* font-size: 16px; */
+  cursor: pointer;
+  transition: 300ms;
+  outline: none;
+}
+.shortcut_div {
+  font: italic 12px/1.5 sans-serif;
+  font: bold;
+  color: rgb(8, 36, 67);
+}
+.content_div {
+  flex: 1;
+  /* text-overflow: ellipsis; */
+  white-space: nowrap;
+  background-color: green;
+}
+#modify_area_div{
+    background-color: blueviolet;
+    padding: 25px;
     position: fixed;
-    top: 0;
-    right: 0;
-    height: 100%;
-    width: 20%;
-    z-index: 9999;
-    background-color: pink;
-    border: 2px solid black;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -65%); /* 添加这一行 */
+    z-index: 999999;
+    width: max-content;
 
     display: flex;
     flex-direction: column;
+    gap:10px
 }
-#btns_div{
-    /* 贴在父元素的底部 */
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: 60px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+#modify_area_div button{
+    height: 50px;
 }
 
-#rows_div{
-    flex-grow: 1;
-}
