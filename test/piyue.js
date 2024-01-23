@@ -134,7 +134,19 @@ window.onload = function () {
       });
       contents.forEach((element) => {});
 
-      console.log(contents.join("\n"));
+      let tacontent = contents.join("\n")
+      // 将 \n 替换为 <p></p>，将空格替换为 &nbsp;
+      tacontent = tacontent.replace(/\n/g, '</p><p>').replace(/ /g, '&nbsp;');
+      tacontent = "<p>"  + tacontent + "</p>"
+      // 将 tacontent 加到body里
+      let div = document.createElement("div")
+
+      div.innerHTML = tacontent
+      body.appendChild(div)
+      
+      console.log(tacontent)
+      // find ta in xxt
+      // todo : https://stackoverflow.com/questions/2388164/set-focus-on-div-contenteditable-element
     }
 
     function confirmModify(event) {
