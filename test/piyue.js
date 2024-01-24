@@ -53,14 +53,21 @@ window.onload = function () {
       new_comment_btn.addEventListener("click", newComment);
       let btn_cf_modify = body.querySelector("#btn_cf_modify");
       btn_cf_modify.addEventListener("click", confirmModify);
+      let btn_import = body.querySelector("#btn_import");
+      btn_import.addEventListener("click", importData);
+      let btn_export = body.querySelector("#btn_export");
+      btn_export.addEventListener("click", exportData);
+      // 确认修改快捷键
       document.addEventListener("keydown", (event) => {
         let el = modify_area_div;
         if (el.classList.contains("t_hidden")) return;
         if (event.shiftKey && event.key == "Enter") {
           confirmModify();
-          preventDefault();
+          event.preventDefault();
         }
       });
+
+      // 选中内容快捷键、修改内容快捷键、删除内容快捷键
       _addContentKeyDownListener();
       // 新增评语快捷键
       document.addEventListener("keydown", (event) => {
@@ -77,6 +84,130 @@ window.onload = function () {
         event.preventDefault();
         btn.click();
       });
+      // 导入导出快捷键
+      document.addEventListener("keydown", (event) => {
+        if (document.activeElement != document.body) return;
+        if (event.ctrlKey || event.altKey || event.shiftKey) return;
+        if (event.key == "-") {
+          let btn = body.querySelector("#btn_import");
+          let rect = btn.getBoundingClientRect();
+          let topElement = document.elementFromPoint(
+            rect.left + rect.width / 2,
+            rect.top + rect.height / 2
+          );
+          if (btn != topElement) return;
+          event.preventDefault();
+          btn.click();
+        }
+        else if (event.key == "`"){
+          let btn = body.querySelector("#btn_export");
+          let rect = btn.getBoundingClientRect();
+          let topElement = document.elementFromPoint(
+            rect.left + rect.width / 2,
+            rect.top + rect.height / 2
+          );
+          if (btn != topElement) return;
+          event.preventDefault();
+          btn.click();
+        }
+      });
+    }
+    function saveToFile(data, filename) {
+      let blob = new Blob([data], { type: "text/plain;charset=utf-8" });
+      let url = URL.createObjectURL(blob);
+      let link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+    function exportData() {
+      let data = JSON.parse(localStorage.getItem(window.t_storage_key));
+
+      if (data == null || data.length == 0) {
+        alert("没有数据可以导出");
+        return;
+      }
+      let str = "";
+      for (let i = 0; i < data.length; ++i) {
+        str += `${i + 1}. ${data[i]}\n`;
+      }
+      let nowDate = new Date();
+      let y = nowDate.getFullYear();
+      let m = nowDate.getMonth() + 1;
+      let d = nowDate.getDay();
+      let date = `${y}_${m}_${d}`;
+      // todo
+      saveToFile(
+        str,
+        `xx课xx作业评语(${date} ${nowDate.toLocaleTimeString()}).txt`
+      );
+    }
+    function importData() {
+      // 创建一个文件输入元素
+      let input = document.createElement("input");
+      input.type = "file";
+
+      // 当用户选择文件后，读取文件内容
+      input.onchange = function (event) {
+        let file = event.target.files[0];
+        let reader = new FileReader();
+        reader.onload = function (event) {
+          function validateData(str) {
+            str = str.trim();
+            let ret = [];
+            let regex = /^\d+\./;
+            // 行首如果出现`${num}.`, 这个序号必须是顺序且连贯的
+            let lines = str
+              .split("\n")
+              .filter((line, i) => regex.test(line))
+              .map((line) => line.match(regex));
+            if (lines.length == 0) return null;
+            for (let i = 0; i < lines.length; ++i) {
+              if (lines[i].indexOf(`${i + 1}.`) == -1) return null;
+            }
+
+            let p = 0;
+            let num = 1;
+            let el_len = 0;
+            while (p != str.length) {
+              let idx = str.indexOf(`${num}.`, p);
+              p = idx + `${num++}.`.length;
+
+              idx = str.indexOf(`${num}.`, p);
+              if (idx == -1) {
+                el_len = str.length - p;
+                ret.push(str.substring(p, p + el_len));
+              } else {
+                el_len = idx - p;
+                ret.push(str.substring(p, p + el_len));
+              }
+              p += el_len;
+            }
+            ret = ret.map((el) => el.trim()).filter((el) => el != "");
+            if (ret.length == 0) return null;
+            return ret;
+          }
+          let data = validateData(event.target.result);
+          console.log(data);
+          if (data == null) {
+            alert("数据格式不正确，参考console输出重新上传");
+            console.log(
+              "标准格式如下：\n1.dsdsdsd\n2. sdsdsdsd\nsd sd\n sd\n3.sdsdsdsd"
+            );
+            return;
+          }
+          localStorage.removeItem(window.t_storage_key);
+          localStorage.setItem(window.t_storage_key, JSON.stringify(data));
+          document.body.querySelector("#rows_div").innerHTML = "";
+          initLocalData();
+        };
+        console.log(event.target.result);
+        reader.readAsText(file);
+      };
+
+      // 模拟用户点击，打开文件选择对话框
+      input.click();
     }
     // 删除修改选中，todo shift删除 todo alt修改
     function _addContentKeyDownListener() {
@@ -85,7 +216,7 @@ window.onload = function () {
         if (el != document.body) return;
 
         let key = event.shiftKey ? event.key.toLocaleLowerCase() : event.key;
-        let idx = window.t_comment_keys.indexOf(key)
+        let idx = window.t_comment_keys.indexOf(key);
         let row = document.body.querySelector("#rows_div").children[idx];
         if (row == null) return;
 
