@@ -348,8 +348,6 @@ window.onload = function () {
         lines = lines.map((line) => "     " + line);
         return numstr + lines.join("\n").substring(5);
       });
-      contents.forEach((element) => {});
-
       let tacontent = contents.join("\n");
       console.log(tacontent);
       // 将 \n 替换为 <p></p>，将空格替换为 &nbsp;
@@ -358,7 +356,7 @@ window.onload = function () {
       // 将 tacontent 加到body里
       let iframe = document.body.querySelector("#ueditor_0");
       if (iframe == null) {
-        console.log("iframe #ueditor_0 is null");
+        // console.log("iframe #ueditor_0 is null");
         return;
       }
       iframe.contentDocument.body.innerHTML = tacontent;
