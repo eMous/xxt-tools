@@ -61,17 +61,44 @@ window.onload = function () {
         }
       });
       _addContentKeyDownListener();
+      // 新增评语快捷键
+      document.addEventListener("keydown", (event) => {
+        if (document.activeElement != document.body) return;
+        if (event.ctrlKey || !event.altKey || event.shiftKey) return;
+        if (event.key != "Enter") return;
+        let btn = body.querySelector("#new_comment_btn");
+        let rect = btn.getBoundingClientRect();
+        let topElement = document.elementFromPoint(
+          rect.left + rect.width / 2,
+          rect.top + rect.height / 2
+        );
+        if (btn != topElement) return;
+        event.preventDefault();
+        btn.click();
+      });
     }
+    // 删除修改选中，todo shift删除 todo alt修改
     function _addContentKeyDownListener() {
       document.addEventListener("keydown", (event) => {
         let el = document.activeElement;
         if (el != document.body) return;
-        if (event.ctrlKey || event.altKey || event.shiftKey) return;
-        let idx = window.t_comment_keys.indexOf(event.key);
+
+        let key = event.shiftKey ? event.key.toLocaleLowerCase() : event.key;
+        let idx = window.t_comment_keys.indexOf(key)
         let row = document.body.querySelector("#rows_div").children[idx];
         if (row == null) return;
-        let content_div = row.querySelector(".content_div");
-        onContentClick({ target: content_div });
+
+        // 选中
+        if (!event.ctrlKey && !event.altKey && !event.shiftKey) {
+          let content_div = row.querySelector(".content_div");
+          onContentClick({ target: content_div });
+        } else if (!event.ctrlKey && !event.altKey && event.shiftKey) {
+          let remove_btn = row.querySelector(".remove_btn button");
+          remove_btn.click();
+        } else if (!event.ctrlKey && event.altKey && !event.shiftKey) {
+          let content_div = row.querySelector(".content_div");
+          showModifyArea({ target: content_div });
+        }
         // content_div.click()
       });
     }
@@ -192,7 +219,7 @@ window.onload = function () {
       contents.forEach((element) => {});
 
       let tacontent = contents.join("\n");
-      console.log(tacontent)
+      console.log(tacontent);
       // 将 \n 替换为 <p></p>，将空格替换为 &nbsp;
       tacontent = tacontent.replace(/\n/g, "</p><p>").replace(/ /g, "&nbsp;");
       tacontent = "<p>" + tacontent + "</p>";
