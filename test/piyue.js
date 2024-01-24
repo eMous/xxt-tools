@@ -56,8 +56,9 @@ window.onload = function () {
       document.addEventListener("keydown", (event) => {
         let el = modify_area_div;
         if (el.classList.contains("t_hidden")) return;
-        if (event.ctrlKey && event.key == "Enter") {
+        if (event.shiftKey && event.key == "Enter") {
           confirmModify();
+          preventDefault();
         }
       });
       _addContentKeyDownListener();
@@ -133,9 +134,9 @@ window.onload = function () {
 
       let button = document.getElementById("btn_cf_modify");
       if (event.t_new_comment === true) {
-        button.textContent = "确认创建(<Ctrl><Enter>)";
+        button.textContent = "确认创建(<Shift><Enter>)";
       } else {
-        button.textContent = "确认修改(<Ctrl><Enter>)";
+        button.textContent = "确认修改(<Shift><Enter>)";
       }
     }
     // _addKeyDownListener(key1)
