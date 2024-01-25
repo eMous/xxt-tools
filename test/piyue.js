@@ -1,16 +1,58 @@
+// ==UserScript==
+// @name         New Userscript
+// @namespace    http://tampermonkey.net/
+// @version      2024-01-22
+// @description  try to take over the world!
+// @author       You
+// @match        https://mooc2-ans.chaoxing.com/mooc2-ans/work/review/question*
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=chaoxing.com
+// @resource template file://C:\Users\tom\Desktop\xxt-tools\test\index_template.html
+// @resource piyue_css file://C:\Users\tom\Desktop\xxt-tools\test\piyue.css
+// @resource piyue_js file://C:\Users\tom\Desktop\xxt-tools\test\piyue.js
+// @grant        GM_getResourceText
+// ==/UserScript==
+
 window.onload = function () {
   (function () {
     "use strict";
+    window.t_comment_keys = "qwerasdfzxcvtyuighjkbnmopl";
+    console.log(window.GM_info);
+    let debug = !GM_info;
+    if (debug) {
+      // tested in xxt-tools
+      // 异步加载拿到 index_template.html 的内容
+      let xhr = new XMLHttpRequest();
+      xhr.open("GET", "index_template.html", true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+          init(xhr.responseText);
+        }
+      };
+      xhr.send();
+    } else {
+      // used in tampermonkey
+      let cssstr = GM_getResourceText("piyue_css");
+      _addCss(cssstr);
+      let htmlstr = GM_getResourceText("template");
+      init(htmlstr);
+    }
 
-    // 异步加载拿到 index_template.html 的内容
-    let xhr = new XMLHttpRequest();
-    xhr.open("GET", "index_template.html", true);
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState == 4 && xhr.status == 200) {
-        afterAsyncLoad(xhr);
+    function _addCss(cssstr) {
+      let style = document.createElement("style");
+      // style.type = "text/css";
+      if (style.styleSheet) {
+        // This is required for IE8 and below.
+        style.styleSheet.cssText = cssstr;
+      } else {
+        style.appendChild(document.createTextNode(cssstr));
       }
-    };
-    xhr.send();
+      document.head.appendChild(style);
+    }
+    function init(htmlstr) {
+      injectDOM(htmlstr);
+      listenerStuff();
+      initLocalData();
+    }
     function initLocalData() {
       window.t_clazzid = document.body
         .querySelector("#clazzid")
@@ -18,7 +60,13 @@ window.onload = function () {
       window.t_courseid = document.body
         .querySelector("#courseid")
         .getAttribute("value");
-      window.t_storage_key = window.t_clazzid + "_" + window.t_courseid;
+      window.t_courseid = document.body
+        .querySelector("#questionid")
+        .getAttribute("value");
+      window.t_storage_key =
+        window.t_clazzid + "_" + window.t_courseid + "_" + window.t_questionid;
+      window.t_storage_key =
+        window.t_clazzid + "_" + window.t_courseid + "_" + window.t_questionid;
       // localStorage.removeItem(window.t_storage_key);
       // let arr = ["回答得不错", "格式有待修改"];
       // localStorage.setItem(window.t_storage_key, JSON.stringify(arr));
@@ -38,11 +86,9 @@ window.onload = function () {
       }
     }
 
-    function injectDOM() {
-      let rawString = xhr.responseText;
-      // 解析rawString 成一个dom元素
+    function injectDOM(htmlstr) {
       let parser = new DOMParser();
-      let doc = parser.parseFromString(rawString, "text/html");
+      let doc = parser.parseFromString(htmlstr, "text/html");
       let div_box = doc.getElementById("tbox");
       document.body.appendChild(div_box);
     }
@@ -98,8 +144,7 @@ window.onload = function () {
           if (btn != topElement) return;
           event.preventDefault();
           btn.click();
-        }
-        else if (event.key == "`"){
+        } else if (event.key == "`") {
           let btn = body.querySelector("#btn_export");
           let rect = btn.getBoundingClientRect();
           let topElement = document.elementFromPoint(
@@ -137,10 +182,20 @@ window.onload = function () {
       let m = nowDate.getMonth() + 1;
       let d = nowDate.getDay();
       let date = `${y}_${m}_${d}`;
+      let hwname = document.body.querySelector(".taskTitle").textContent;
+      let xiti = 0;
+      let allxitis = document.body.querySelectorAll(".topicNumber_list li");
+      for (; xiti < allxitis.length; ++xiti) {
+        if (allxitis[xiti].classList.contains("current")) {
+          break;
+        }
+      }
       // todo
       saveToFile(
         str,
-        `xx课xx作业评语(${date} ${nowDate.toLocaleTimeString()}).txt`
+        `xx课作业[${hwname}]题目[${
+          xiti + 1
+        }]评语(${date} ${nowDate.toLocaleTimeString()}).txt`
       );
     }
     function importData() {
@@ -233,11 +288,6 @@ window.onload = function () {
         }
         // content_div.click()
       });
-    }
-    function afterAsyncLoad(xhr) {
-      injectDOM();
-      listenerStuff();
-      initLocalData();
     }
     function rowRemove(event) {
       let row_div = event.target.closest(".row_div");
@@ -408,13 +458,6 @@ window.onload = function () {
       });
       event2.t_new_comment = true;
       newrow.querySelector(".content_div").dispatchEvent(event2);
-      rerenderShortcut();
-    }
-
-    window.t_comment_keys = "qwerasdfzxcvtyuighjkbnmopl";
-    function rerenderShortcut() {
-      // TODO
-      let comment_keys = window.t_comment_keys;
     }
   })();
 };
