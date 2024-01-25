@@ -51,18 +51,50 @@ window.onload = function () {
     function init(htmlstr) {
       injectDOM(htmlstr);
       listenerStuff();
+      initGlobal();
       initLocalData();
     }
-    function initLocalData() {
+    function initGlobal() {
+      window.t_fid = document.body.querySelector("#mfid").getAttribute("value");
       window.t_clazzid = document.body
         .querySelector("#clazzid")
         .getAttribute("value");
       window.t_courseid = document.body
         .querySelector("#courseid")
         .getAttribute("value");
-      window.t_courseid = document.body
+      window.t_questionid = document.body
         .querySelector("#questionid")
         .getAttribute("value");
+      window.t_clazzname = null;
+      {
+        let iframe = document.createElement("iframe");
+        iframe.src = `https://mobilelearn.chaoxing.com/v2/apis/class/getClassList?fid=${window.t_fid}&courseId=${window.t_courseid}`; // 你想要加载的网页的 URL
+        console.log(iframe.src);
+        iframe.width = "500"; // iframe 的宽度
+        iframe.height = "500"; // iframe 的高度
+        console.log(iframe)
+        debugger
+        document.body.appendChild(iframe); // 将 iframe 添加到 body 元素
+
+
+// todo 拿不到因为不同源
+
+
+        // let xhr = new XMLHttpRequest();
+        // // todo fid
+        // xhr.open(
+        //   "GET",
+        //   `https://mobilelearn.chaoxing.com/v2/apis/class/getClassList?fid=${window.t_fid}&courseId=${window.t_courseid}`,
+        //   true
+        // );
+        // xhr.onreadystatechange = function () {
+        //   if (xhr.readyState == 4 && xhr.status == 200) {
+        //     let k = new JSON(xhr.responseText);
+        //     debugger;
+        //   }
+        // };
+        // xhr.send();
+      }
       window.t_storage_key =
         window.t_clazzid + "_" + window.t_courseid + "_" + window.t_questionid;
       window.t_storage_key =
@@ -71,6 +103,8 @@ window.onload = function () {
       // let arr = ["回答得不错", "格式有待修改"];
       // localStorage.setItem(window.t_storage_key, JSON.stringify(arr));
       window.t_data = JSON.parse(localStorage.getItem(window.t_storage_key));
+    }
+    function initLocalData() {
       if (window.t_data) {
         for (let i = 0; i < window.t_data.length; i++) {
           let row_div = document.body
@@ -190,6 +224,7 @@ window.onload = function () {
           break;
         }
       }
+
       // todo
       saveToFile(
         str,
