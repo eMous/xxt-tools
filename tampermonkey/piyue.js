@@ -1,22 +1,8 @@
-// ==UserScript==
-// @name         New Userscript
-// @namespace    http://tampermonkey.net/
-// @version      2024-01-22
-// @description  try to take over the world!
-// @author       You
-// @match        https://mooc2-ans.chaoxing.com/mooc2-ans/work/review/question*
-// @icon         https://www.google.com/s2/favicons?sz=64&domain=chaoxing.com
-// @resource template file://C:\Users\tom\Desktop\xxt-tools\test\index_template.html
-// @resource piyue_css file://C:\Users\tom\Desktop\xxt-tools\test\piyue.css
-// @resource piyue_js file://C:\Users\tom\Desktop\xxt-tools\test\piyue.js
-// @grant        GM_getResourceText
-// ==/UserScript==
-
 window.onload = function () {
   (function () {
     "use strict";
+    console.log("piyue.js loaded, test me here.");
     window.t_comment_keys = "qwerasdfzxcvtyuighjkbnmopl";
-    console.log(window.GM_info);
     let debug = !GM_info;
     if (debug) {
       // tested in xxt-tools
@@ -54,8 +40,73 @@ window.onload = function () {
       initGlobal();
       initLocalData();
     }
+    function getCoursename(courseid) {
+      window.t_coursenames = GM_getValue("coursenames", {});
+      GM_removeValueChangeListener(window.t_coursenames_listenerid);
+      window.t_coursenames_listenerid = GM_addValueChangeListener(
+        "coursenames",
+        function (key, oldv, newv, remote) {
+          if (newv[courseid]) {
+            window.t_coursenames[courseid] = newv[courseid];
+          }
+        }
+      );
+      if (window.t_coursenames[courseid]) {
+        return window.t_coursenames[courseid];
+      } else {
+        return "未知课程";
+      }
+    }
+    function getClazzname(clazzid) {
+      window.t_clazznames = GM_getValue("clazznames", {});
+      GM_removeValueChangeListener(window.t_clazznames_listenerid);
+      window.t_clazznames_listenerid = GM_addValueChangeListener(
+        "clazznames",
+        function (key, oldv, newv, remote) {
+          if (newv[clazzid]) {
+            window.t_clazznames[clazzid] = newv[clazzid];
+          }
+        }
+      );
+      if (window.t_clazznames[clazzid]) {
+        return window.t_clazznames[clazzid];
+      } else {
+        return "未知班级";
+      }
+    }
+    function getTeachername(fid) {
+      window.t_teachernames = GM_getValue("teachernames", {});
+      GM_removeValueChangeListener(window.t_teachernames_listenerid);
+      window.t_teachernames_listenerid = GM_addValueChangeListener(
+        "teachernames",
+        function (key, oldv, newv, remote) {
+          if (newv[fid]) {
+            window.t_teachernames[fid] = newv[fid];
+          }
+        }
+      );
+      if (window.t_teachernames[fid]) {
+        return window.t_teachernames[fid];
+      } else {
+        return "未知教师";
+      }
+    }
+    function _iframeCreateToGetData(url) {
+      setTimeout(() => {
+        // get clazz name
+        let iframe = document.createElement("iframe");
+        iframe.src = url;
+        iframe.width = "1"; // iframe 的宽度
+        iframe.height = "1"; // iframe 的高度
+        document.body.appendChild(iframe);
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+        }, 10000);
+      }, 500);
+    }
     function initGlobal() {
       window.t_fid = document.body.querySelector("#mfid").getAttribute("value");
+      window.t_cpi = document.body.querySelector("#cpi").getAttribute("value"); // for teacher name, for user id
       window.t_clazzid = document.body
         .querySelector("#clazzid")
         .getAttribute("value");
@@ -65,43 +116,28 @@ window.onload = function () {
       window.t_questionid = document.body
         .querySelector("#questionid")
         .getAttribute("value");
-      window.t_clazzname = null;
-      {
-        let iframe = document.createElement("iframe");
-        iframe.src = `https://mobilelearn.chaoxing.com/v2/apis/class/getClassList?fid=${window.t_fid}&courseId=${window.t_courseid}`; // 你想要加载的网页的 URL
-        console.log(iframe.src);
-        iframe.width = "500"; // iframe 的宽度
-        iframe.height = "500"; // iframe 的高度
-        console.log(iframe)
-        debugger
-        document.body.appendChild(iframe); // 将 iframe 添加到 body 元素
-
-
-// todo 拿不到因为不同源
-
-
-        // let xhr = new XMLHttpRequest();
-        // // todo fid
-        // xhr.open(
-        //   "GET",
-        //   `https://mobilelearn.chaoxing.com/v2/apis/class/getClassList?fid=${window.t_fid}&courseId=${window.t_courseid}`,
-        //   true
-        // );
-        // xhr.onreadystatechange = function () {
-        //   if (xhr.readyState == 4 && xhr.status == 200) {
-        //     let k = new JSON(xhr.responseText);
-        //     debugger;
-        //   }
-        // };
-        // xhr.send();
+      window.t_clazznames = getClazzname(window.t_clazzid);
+      window.t_coursename = getCoursename(window.t_courseid);
+      // !may be bug but quicker  默认班级名称和课程名称不会改变
+      if (getClazzname(window.t_clazzid) == "未知班级") {
+        _iframeCreateToGetData(
+          `https://mobilelearn.chaoxing.com/v2/apis/class/getClassList?fid=${window.t_fid}&courseId=${window.t_courseid}`
+        );
+      }
+      if (getCoursename(window.t_courseid) == "未知课程") {
+        _iframeCreateToGetData(
+          `https://www.xueyinonline.com/detail/${window.t_courseid}`
+        );
+      }
+      if (getTeachername(window.t_cpi) == "未知教师") {
+        _iframeCreateToGetData(
+          `https://mobilelearn.chaoxing.com/v2/apis/class/getHasPermissionTeacherAndClass?courseId=${window.t_courseid}&fid=${window.t_fid}&DB_STRATEGY=COURSEID&STRATEGY_PARA=courseId`
+        );
       }
       window.t_storage_key =
         window.t_clazzid + "_" + window.t_courseid + "_" + window.t_questionid;
       window.t_storage_key =
         window.t_clazzid + "_" + window.t_courseid + "_" + window.t_questionid;
-      // localStorage.removeItem(window.t_storage_key);
-      // let arr = ["回答得不错", "格式有待修改"];
-      // localStorage.setItem(window.t_storage_key, JSON.stringify(arr));
       window.t_data = JSON.parse(localStorage.getItem(window.t_storage_key));
     }
     function initLocalData() {
@@ -202,7 +238,6 @@ window.onload = function () {
     }
     function exportData() {
       let data = JSON.parse(localStorage.getItem(window.t_storage_key));
-
       if (data == null || data.length == 0) {
         alert("没有数据可以导出");
         return;
@@ -224,13 +259,13 @@ window.onload = function () {
           break;
         }
       }
-
-      // todo
       saveToFile(
         str,
-        `xx课作业[${hwname}]题目[${
-          xiti + 1
-        }]评语(${date} ${nowDate.toLocaleTimeString()}).txt`
+        `课程：[${getCoursename(window.t_courseid)}] 班级：[${getClazzname(
+          window.t_clazzid
+        )}] 作业：[${hwname}] 题目：[${xiti + 1}] 教师：[${getTeachername(
+          window.t_cpi
+        )}] 日期：[${date} ${nowDate.toLocaleTimeString()}] - 评语.txt`
       );
     }
     function importData() {
@@ -287,6 +322,7 @@ window.onload = function () {
             );
             return;
           }
+          window.t_data = data;
           localStorage.removeItem(window.t_storage_key);
           localStorage.setItem(window.t_storage_key, JSON.stringify(data));
           document.body.querySelector("#rows_div").innerHTML = "";
@@ -434,7 +470,7 @@ window.onload = function () {
         return numstr + lines.join("\n").substring(5);
       });
       let tacontent = contents.join("\n");
-      console.log(tacontent);
+      // console.log(tacontent);
       // 将 \n 替换为 <p></p>，将空格替换为 &nbsp;
       tacontent = tacontent.replace(/\n/g, "</p><p>").replace(/ /g, "&nbsp;");
       tacontent = "<p>" + tacontent + "</p>";
