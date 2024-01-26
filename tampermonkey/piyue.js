@@ -67,6 +67,7 @@ window.onload = function () {
       }
       // add percentage score
       let el = document.body.querySelector("div.numberDiv");
+      let scoreinput = el.querySelector("input");
       el.style["float"] = "none";
       el.style["display"] = "inline-block";
       let newel = el.cloneNode(true);
@@ -82,6 +83,17 @@ window.onload = function () {
       percentageinput.classList.remove("markScore");
       percentageinput.removeAttribute("name");
       percentageinput.placeholder = "0-100";
+      if (scoreinput.value) {
+        // Fix when reviewing marked questions
+        let id = $(scoreinput).attr("data");
+        let percentage =
+          (Number(scoreinput.value) / Number($(`#fullScore${id}`).val())) * 100;
+        if (Number.isInteger(Number(percentage))) {
+          percentageinput.value = percentage.toFixed(0);
+        } else {
+          percentageinput.value = percentage.toFixed(1);
+        }
+      }
       percentageinput.addEventListener("input", (event) => {
         let target = event.target;
         let id = $(target).attr("data");
@@ -761,7 +773,6 @@ window.onload = function () {
 // var mouseMoveFunc = function(event){
 //     undermouseEle = document.elementFromPoint(event.clientX, event.clientY);
 // }
-
 
 // 2. 自动移动到打分处
 
