@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      2024-01-22
 // @description  try to take over the world!
-// @author       You
+// @author       tomt
 // @match        https://mooc2-ans.chaoxing.com/mooc2-ans/work/review/question*
 // @match        https://mobilelearn.chaoxing.com/v2/apis/*
 // @match        https://www.xueyinonline.com/detail/*
