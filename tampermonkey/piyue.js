@@ -747,7 +747,7 @@ window.onload = function () {
 };
 
 // todo below
-// 图片rotate
+// 1. 图片rotate
 // var links,link,i,clickEvent,scoreInput,undermouseEle;
 
 // var keyUpFunc = function(event){
@@ -761,3 +761,8 @@ window.onload = function () {
 // var mouseMoveFunc = function(event){
 //     undermouseEle = document.elementFromPoint(event.clientX, event.clientY);
 // }
+
+
+// 2. 自动移动到打分处
+
+// 3. 自动预览文件
