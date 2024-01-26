@@ -110,6 +110,7 @@ window.onload = function () {
           $(`#score${id}`).val("");
         } else {
           let score = fullScore * (target.value / 100);
+
           $(`#score${id}`).val(score.toFixed(1));
         }
       });
@@ -144,7 +145,11 @@ window.onload = function () {
           $(`#percentageInput`).val("");
         } else {
           let percentage = (this.value / fullScore) * 100;
-          $(`#percentageInput`).val(percentage.toFixed(1));
+          if (Number.isInteger(Number(percentage))) {
+            $(`#percentageInput`).val(percentage.toFixed(0));
+          } else {
+            $(`#percentageInput`).val(percentage.toFixed(1));
+          }
         }
       });
       // modify basic styles
@@ -263,9 +268,18 @@ window.onload = function () {
         $("input[name=score" + recordId + "]").blur();
       }, 100);
     }
+    function isTop(el) {
+      let rect = el.getBoundingClientRect();
+      let centerX = rect.left + rect.width / 2;
+      let centerY = rect.top + rect.height / 2;
+      let topElement = document.elementFromPoint(centerX, centerY);
+      return topElement == el;
+    }
     function _addQuickScoreListener() {
       document.addEventListener("keydown", (event) => {
         // 1234567890 pressed down
+        let scoreInput = document.querySelector("#percentageInput");
+        if (!isTop(scoreInput)) return;
         if (document.activeElement != document.body) return;
         if (event.ctrlKey || event.altKey || event.shiftKey) return;
         if (window.t_scorekeys.indexOf(event.key) == -1) return;
@@ -277,11 +291,7 @@ window.onload = function () {
       document.addEventListener("keydown", (event) => {
         // Enter pressed manualy input score
         let scoreInput = document.querySelector("#percentageInput");
-        let rect = scoreInput.getBoundingClientRect();
-        let centerX = rect.left + rect.width / 2;
-        let centerY = rect.top + rect.height / 2;
-        let topElement = document.elementFromPoint(centerX, centerY);
-        if (topElement != scoreInput) return;
+        if (!isTop(scoreInput)) return;
         if (document.activeElement != document.body) return;
         if (event.ctrlKey || event.altKey || event.shiftKey) return;
         if (event.key != "Enter") return;
@@ -296,11 +306,7 @@ window.onload = function () {
       document.addEventListener("keydown", (event) => {
         // Space next person
         let el = document.body.querySelector(".bottomdiv a.jb_btn");
-        let rect = el.getBoundingClientRect();
-        let centerX = rect.left + rect.width / 2;
-        let centerY = rect.top + rect.height / 2;
-        let topElement = document.elementFromPoint(centerX, centerY);
-        if (topElement != el) return;
+        if (!isTop(el)) return;
         if (event.ctrlKey || event.altKey || event.shiftKey) return;
         if (document.activeElement != document.body) return;
         if (event.key != " ") return;
@@ -318,11 +324,7 @@ window.onload = function () {
           }
         }
         if (el === undefined) return;
-        let rect = el.getBoundingClientRect();
-        let centerX = rect.left + rect.width / 2;
-        let centerY = rect.top + rect.height / 2;
-        let topElement = document.elementFromPoint(centerX, centerY);
-        if (topElement != el) return;
+        if (!isTop(el)) return;
         if (event.ctrlKey || event.altKey || event.shiftKey) return;
         if (document.activeElement != document.body) return;
         if (event.key != "Backspace") return;
@@ -417,12 +419,7 @@ window.onload = function () {
         if (event.ctrlKey || !event.altKey || event.shiftKey) return;
         if (event.key != "Enter") return;
         let btn = body.querySelector("#new_comment_btn");
-        let rect = btn.getBoundingClientRect();
-        let topElement = document.elementFromPoint(
-          rect.left + rect.width / 2,
-          rect.top + rect.height / 2
-        );
-        if (btn != topElement) return;
+        if (!isTop(btn)) return;
         event.preventDefault();
         btn.click();
       });
@@ -432,22 +429,12 @@ window.onload = function () {
         if (event.ctrlKey || event.altKey || event.shiftKey) return;
         if (event.key == "-") {
           let btn = body.querySelector("#btn_import");
-          let rect = btn.getBoundingClientRect();
-          let topElement = document.elementFromPoint(
-            rect.left + rect.width / 2,
-            rect.top + rect.height / 2
-          );
-          if (btn != topElement) return;
+          if (!isTop(btn)) return;
           event.preventDefault();
           btn.click();
         } else if (event.key == "`") {
           let btn = body.querySelector("#btn_export");
-          let rect = btn.getBoundingClientRect();
-          let topElement = document.elementFromPoint(
-            rect.left + rect.width / 2,
-            rect.top + rect.height / 2
-          );
-          if (btn != topElement) return;
+          if (!isTop(btn)) return;
           event.preventDefault();
           btn.click();
         }
@@ -717,7 +704,7 @@ window.onload = function () {
         alert("请输入内容");
         return;
       }
-      let content = textarea.value;
+      let content = textarea.value.trim();
       // 将textarea的值设置为content_div的内容
       let content_div = window.t_content_div;
       delete window.t_content_div;
