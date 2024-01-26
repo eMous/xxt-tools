@@ -3,6 +3,8 @@ window.onload = function () {
     "use strict";
     console.log("piyue.js loaded, test me here.");
     window.t_comment_keys = "qwerasdfzxcvtyuighjkbnmopl";
+    window.t_scores = [1, 0.95, 0.9, 0.85, 0.82, 0.78, 0.7, 0.65, 0.6, 0];
+    window.t_scorekeys = "1234567890";
     let debug = !GM_info;
     if (debug) {
       // tested in xxt-tools
@@ -35,10 +37,148 @@ window.onload = function () {
       document.head.appendChild(style);
     }
     function init(htmlstr) {
+      originalDOMModify();
       injectDOM(htmlstr);
       listenerStuff();
       initGlobal();
       initLocalData();
+    }
+    function originalDOMModify() {
+      window.fastSore = fastSore;
+      // modify fastScore lis
+      let lis = document.body.querySelectorAll("li.fastScore");
+      for (let i = 0; i < lis.length; ++i) {
+        let el = document.createElement("b");
+        lis[i].appendChild(el);
+      }
+      let litemplate = document.body.querySelector("li.fastScore");
+      for (let i = 0; i < window.t_scores.length; ++i) {
+        let lis = document.body.querySelectorAll("li.fastScore");
+        if (i >= lis.length) {
+          let newli = litemplate.cloneNode(true);
+          litemplate.parentElement.appendChild(newli);
+        }
+        let li = document.body.querySelectorAll("li.fastScore")[i];
+        li.setAttribute("data", i + 1);
+        let a = li.querySelector("a");
+        a.textContent = `${window.t_scores[i] * 100}%`;
+        let el = li.querySelector("b");
+        el.textContent = window.t_scorekeys[i];
+      }
+      // add percentage score
+      let el = document.body.querySelector("div.numberDiv");
+      el.style["float"] = "none";
+      el.style["display"] = "inline-block";
+      let newel = el.cloneNode(true);
+      el.insertAdjacentElement("afterend", newel);
+      newel.style["margin-left"] = "60px";
+
+      newel.innerHTML = newel.innerHTML
+        .trim()
+        .replace("得分", "百分比得分")
+        .replace(/分$/, "%");
+      let percentageinput = newel.querySelector("input");
+      percentageinput.setAttribute("id", "percentageInput");
+      percentageinput.classList.remove("markScore");
+      percentageinput.removeAttribute("name");
+      percentageinput.placeholder = "0-100";
+      percentageinput.addEventListener("input", (event) => {
+        let target = event.target;
+        let id = $(target).attr("data");
+        let fullScore = $("#fullScore" + id).val();
+        console.log(fullScore);
+        if (Number(target.value) > Number(100)) {
+          target.value = "";
+          $.toast({
+            type: "notice",
+            content: "百分比不能超过" + 100 + "%",
+          });
+        }
+        if (isNaN(target.value)) {
+          target.value = "";
+        }
+        target.value = target.value.replace(/[^\d.]/g, "");
+        var patt = /^(\d+(\.\d{0,1})?)$/g;
+        if (!patt.test(target.value) && target.value != "") {
+          $.toast({
+            type: "notice",
+            content: "小数点后只能保留一位",
+          });
+          target.value = Number($(target).val()).toFixed(1);
+        }
+        if (target.value === "") {
+          $(`#score${id}`).val("");
+        } else {
+          let score = fullScore * (target.value / 100);
+          $(`#score${id}`).val(score.toFixed(1));
+        }
+      });
+
+      $(".markScore").off("keyup");
+      $(".markScore").keyup(function () {
+        var id = $(this).attr("data");
+        var fullScore = $("#fullScore" + id).val();
+
+        if (Number(this.value) > Number(fullScore)) {
+          this.value = "";
+          $.toast({
+            type: "notice",
+            content: "不能超过该题满分" + fullScore + "分",
+          });
+        }
+
+        if (isNaN(this.value)) {
+          this.value = "";
+        }
+
+        this.value = this.value.replace(/[^\d.]/g, "");
+        var patt = /^(\d+(\.\d{0,1})?)$/g;
+        if (!patt.test(this.value) && this.value != "") {
+          $.toast({
+            type: "notice",
+            content: "小数点后只能保留一位",
+          });
+          this.value = Number($(this).val()).toFixed(1);
+        }
+        if (this.value === "") {
+          $(`#percentageInput`).val("");
+        } else {
+          let percentage = (this.value / fullScore) * 100;
+          $(`#percentageInput`).val(percentage.toFixed(1));
+        }
+      });
+      // modify basic styles
+      el = document.body.querySelector("div.quickScoring");
+      el.style["margin-left"] = "0px";
+      el.style["float"] = "none";
+      el = document.body.querySelector("div.quickTit");
+      el.style["float"] = "none";
+      el = document.body.querySelector("ul.quickOption");
+      el.style["margin-left"] = "0px";
+      el.style["margin-top"] = "20px";
+      el.style["float"] = "none";
+      el.style["display"] = "flex";
+      let els = document.body.querySelectorAll("ul.quickOption li");
+      els.forEach((el) => {
+        el.style["margin-right"] = "10px";
+        el = el.querySelector("a");
+        el.style["width"] = "max-content";
+      });
+      els = document.body.querySelectorAll("ul.quickOption li b");
+      els.forEach((el) => {
+        el.style["position"] = "relative";
+        el.style["top"] = "-25px";
+
+        let a = el.previousElementSibling;
+
+        // debugger
+        el.style["left"] = `-${
+          a.getBoundingClientRect().width / 2 +
+          el.getBoundingClientRect().width / 2
+        }px`;
+        // el.style["left"] = `0px`;
+      });
+      // el.classList.remove("fl")
     }
     function getCoursename(courseid) {
       window.t_coursenames = GM_getValue("coursenames", {});
@@ -103,6 +243,91 @@ window.onload = function () {
           document.body.removeChild(iframe);
         }, 10000);
       }, 500);
+    }
+    function fastSore(obj) {
+      $(".fastScore").removeClass("curoption");
+      $(obj).addClass("curoption");
+      var recordId = $(obj).parents(".quickScoring").attr("data");
+      28;
+      var grade = $(obj).attr("data");
+      var fullScore = $("#fullScore" + recordId).val() || 0;
+      fullScore = parseFloat(fullScore);
+      var score = 0;
+      let idx =
+        grade > window.t_scores.length ? window.t_scores.length - 1 : grade - 1;
+      score = fullScore * window.t_scores[idx];
+      score = score.toFixed(1).replace(".0", "");
+      $("input[name=score" + recordId + "]").val(score);
+      $("input[name=score" + recordId + "]").keyup();
+      setTimeout(function () {
+        $("input[name=score" + recordId + "]").blur();
+      }, 100);
+    }
+    function _addQuickScoreListener() {
+      document.addEventListener("keydown", (event) => {
+        // 1234567890 pressed down
+        if (document.activeElement != document.body) return;
+        if (event.ctrlKey || event.altKey || event.shiftKey) return;
+        if (window.t_scorekeys.indexOf(event.key) == -1) return;
+        let links = document.querySelectorAll("li.fastScore a");
+        let i = window.t_scorekeys.indexOf(event.key);
+        if (i >= links.length) i = links.length - 1;
+        links[i].click();
+      });
+      document.addEventListener("keydown", (event) => {
+        // Enter pressed manualy input score
+        let scoreInput = document.querySelector("#percentageInput");
+        let rect = scoreInput.getBoundingClientRect();
+        let centerX = rect.left + rect.width / 2;
+        let centerY = rect.top + rect.height / 2;
+        let topElement = document.elementFromPoint(centerX, centerY);
+        if (topElement != scoreInput) return;
+        if (document.activeElement != document.body) return;
+        if (event.ctrlKey || event.altKey || event.shiftKey) return;
+        if (event.key != "Enter") return;
+        scoreInput.focus();
+      });
+      document.addEventListener("keydown", (event) => {
+        // Esc every thing blur
+        if (event.ctrlKey || event.altKey || event.shiftKey) return;
+        if (event.key != "Escape") return;
+        document.activeElement.blur();
+      });
+      document.addEventListener("keydown", (event) => {
+        // Space next person
+        let el = document.body.querySelector(".bottomdiv a.jb_btn");
+        let rect = el.getBoundingClientRect();
+        let centerX = rect.left + rect.width / 2;
+        let centerY = rect.top + rect.height / 2;
+        let topElement = document.elementFromPoint(centerX, centerY);
+        if (topElement != el) return;
+        if (event.ctrlKey || event.altKey || event.shiftKey) return;
+        if (document.activeElement != document.body) return;
+        if (event.key != " ") return;
+        if ($(el).text() != "下一份" && $(el).text() != "保存") return;
+        el.click();
+      });
+      document.addEventListener("keydown", (event) => {
+        // todo 优化查找
+        let els = document.body.querySelectorAll("a");
+        let el;
+        for (let i = 0; i < els.length; i++) {
+          if (els[i].textContent === "上一份") {
+            el = els[i];
+            break;
+          }
+        }
+        if (el === undefined) return;
+        let rect = el.getBoundingClientRect();
+        let centerX = rect.left + rect.width / 2;
+        let centerY = rect.top + rect.height / 2;
+        let topElement = document.elementFromPoint(centerX, centerY);
+        if (topElement != el) return;
+        if (event.ctrlKey || event.altKey || event.shiftKey) return;
+        if (document.activeElement != document.body) return;
+        if (event.key != "Backspace") return;
+        el.click();
+      });
     }
     function initGlobal() {
       window.t_fid = document.body.querySelector("#mfid").getAttribute("value");
@@ -182,7 +407,8 @@ window.onload = function () {
           event.preventDefault();
         }
       });
-
+      // 快速打分快捷键
+      _addQuickScoreListener();
       // 选中内容快捷键、修改内容快捷键、删除内容快捷键
       _addContentKeyDownListener();
       // 新增评语快捷键
@@ -532,3 +758,19 @@ window.onload = function () {
     }
   })();
 };
+
+// todo below
+// 图片rotate
+// var links,link,i,clickEvent,scoreInput,undermouseEle;
+
+// var keyUpFunc = function(event){
+//     if (event.key === "r" && undermouseEle.tagName.toLowerCase() === 'img') {
+//         console.log(undermouseEle);
+//         if(undermouseEle.currentAngle === undefined) undermouseEle.currentAngle=0;
+//         undermouseEle.currentAngle = (undermouseEle.currentAngle+90)%360;
+//         undermouseEle.style.transform = 'rotate('+undermouseEle.currentAngle+'deg)';
+//     }
+// }
+// var mouseMoveFunc = function(event){
+//     undermouseEle = document.elementFromPoint(event.clientX, event.clientY);
+// }

@@ -12,6 +12,10 @@
 // @resource piyue_css https://raw.githubusercontent.com/eMous/xxt-tools/main/tampermonkey/piyue.css
 // @resource piyue_js https://raw.githubusercontent.com/eMous/xxt-tools/main/tampermonkey/piyue.js
 // @resource dataget_js https://raw.githubusercontent.com/eMous/xxt-tools/main/tampermonkey/dataget.js
+// @resource template file://C:\Users\tom\Desktop\xxt-tools\tampermonkey\index_template.html
+// @resource piyue_css file://C:\Users\tom\Desktop\xxt-tools\tampermonkey\piyue.css
+// @resource piyue_js file://C:\Users\tom\Desktop\xxt-tools\tampermonkey\piyue.js
+// @resource dataget_js file://C:\Users\tom\Desktop\xxt-tools\tampermonkey\dataget.js
 // @grant        GM_getResourceText
 // @grant        GM_getValue
 // @grant        GM_setValue
