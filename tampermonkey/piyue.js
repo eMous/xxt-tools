@@ -43,6 +43,12 @@ window.onload = function () {
       initGlobal();
       initLocalData();
     }
+    function styleSetting() {
+      // set height of #tb to screenheight minus 70px
+      let tb = document.getElementById("tb");
+      let height = window.innerHeight - 70;
+      tb.style.height = height + "px";
+    }
     function originalDOMModify() {
       window.fastSore = fastSore;
       // modify fastScore lis
@@ -403,6 +409,11 @@ window.onload = function () {
     }
     function listenerStuff() {
       let body = document.body;
+      // add event listener to listen page height change event
+      window.addEventListener("resize", () => {
+        styleSetting();
+      });
+
       _addEventListenerInPingyuRow();
       let new_comment_btn = body.querySelector("#new_comment_btn");
       new_comment_btn.addEventListener("click", newComment);
