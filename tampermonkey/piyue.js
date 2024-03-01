@@ -39,6 +39,7 @@ window.onload = function () {
     function init(htmlstr) {
       originalDOMModify();
       injectDOM(htmlstr);
+      styleSetting();
       listenerStuff();
       initGlobal();
       initLocalData();
