@@ -397,12 +397,6 @@ window.onload = function () {
             window.t_courseid +
             "_" +
             window.t_questionid;
-          window.t_storage_key =
-            window.t_clazzid +
-            "_" +
-            window.t_courseid +
-            "_" +
-            window.t_questionid;
           window.t_data = JSON.parse(
             localStorage.getItem(window.t_storage_key)
           );
