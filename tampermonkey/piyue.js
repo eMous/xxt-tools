@@ -1,4 +1,45 @@
 window.onload = function () {
+  window.saveMark = (goStep, callback) => {
+	console.log("Hello World!");
+  if (saveLock != 0) {
+		return;
+	}
+	saveLock = 1;
+
+	setCompoundSubjectQuesScore();
+	setCompoundSubjectQuesComment();
+	setMarkLabel();
+
+	var formData = $("#markForm").serialize();
+
+	$.ajax({
+		type : "post",
+		url : "/mooc2-ans/work/saveMark",
+		dataType : "json",
+		data : formData,
+		success : function(data) {
+			if ( !data.status) {
+				$.toast({
+					type : "failure",
+					content : data.msg
+				});
+				saveLock = 0;
+				return false;
+			}
+
+			if (goStep) {
+				callback && callback();
+			} else {
+				$.toast({
+					type : "success",
+					content : "保存成功！"
+				});
+				saveLock = 0;
+			}
+		}
+	});
+}
+
   setInterval(function () {
     let tb = document.getElementById("tb");
     if (!tb) {
@@ -373,6 +414,9 @@ window.onload = function () {
           window.t_questionid = document.body
             .querySelector("#questionid")
             .getAttribute("value");
+          window.t_recordid = document.body
+            .querySelector("#recordid")
+            .getAttribute("value");
           window.t_clazznames = getClazzname(window.t_clazzid);
           window.t_coursename = getCoursename(window.t_courseid);
           // !may be bug but quicker  默认班级名称和课程名称不会改变
@@ -402,7 +446,6 @@ window.onload = function () {
           );
         }
         function initLocalData() {
-          debugger;
           if (window.t_data) {
             for (let i = 0; i < window.t_data.length; i++) {
               let row_div = document.body
@@ -415,7 +458,8 @@ window.onload = function () {
               rows_div.appendChild(row_div);
             }
             _addEventListenerInPingyuRow();
-            rerenderComment();
+            //rerenderComment();
+            renderCommentSideBar();
           }
         }
 
@@ -694,7 +738,7 @@ window.onload = function () {
           }
           rerenderComment();
         }
-        function rerenderComment() {
+        function renderCommentSideBar(){
           let body = document.body;
           // find all rowdiv
           let row_divs = body.querySelectorAll("#rows_div .row_div");
@@ -708,6 +752,10 @@ window.onload = function () {
               ".shortcut_div"
             ).textContent = `(${window.t_comment_keys[i]})`;
           }
+        }
+        function rerenderComment() {
+          renderCommentSideBar();
+          let body = document.body;
           // find all content_div that the rowdiv has t_selected class
           let selected_content_divs = body.querySelectorAll(
             ".content_div.t_selected"
@@ -731,6 +779,7 @@ window.onload = function () {
           tacontent = tacontent
             .replace(/\n/g, "</p><p>")
             .replace(/ /g, "&nbsp;");
+          
           tacontent = "<p>" + tacontent + "</p>";
           // 将 tacontent 加到body里
           let iframe = document.body.querySelector("#ueditor_0");
@@ -739,6 +788,8 @@ window.onload = function () {
             return;
           }
           iframe.contentDocument.body.innerHTML = tacontent;
+          let textarea = body.querySelector(`#answer${window.t_recordid}`);
+          textarea.value = tacontent;
           // if need to focus: https://stackoverflow.com/questions/2388164/set-focus-on-div-contenteditable-element
         }
 
