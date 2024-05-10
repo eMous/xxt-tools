@@ -323,12 +323,33 @@ window.onload = function () {
             if (event.key != "Enter") return;
             scoreInput.focus();
           });
+          
           document.addEventListener("keydown", (event) => {
-            // Esc every thing blur
+            // Esc every thing blur when no textarea shown           
+            let scoreInput = document.querySelector("#percentageInput");
+            if (!isTop(scoreInput)) return;
             if (event.ctrlKey || event.altKey || event.shiftKey) return;
             if (event.key != "Escape") return;
             document.activeElement.blur();
           });
+ 
+          document.addEventListener("keydown", (event) => {
+            // Esc to hide textarea         
+            let modify_area_div = document.getElementById("modify_area_div");
+            let ta = modify_area_div.querySelector("textarea#ta");
+            if (!isTop(ta)) return;
+            if (event.ctrlKey || event.altKey || event.shiftKey) return;
+            if (event.key != "Escape") return;
+
+            modify_area_div.classList.add("t_hidden");
+            document.getElementById("ta_overlay").classList.add("t_hidden");
+            debugger 
+            let rows_div = document.getElementById("rows_div");
+            rows_div.removeChild(rows_div.lastChild);
+            
+            //rerender();
+          });
+ 
           document.addEventListener("keydown", (event) => {
             // Space next person
             let el = document.body.querySelector(".bottomdiv a.jb_btn");
@@ -799,6 +820,7 @@ window.onload = function () {
           event2.t_new_comment = true;
           newrow.querySelector(".content_div").dispatchEvent(event2);
         }
+
       })();
     }
   }, 100);
