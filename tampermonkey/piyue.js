@@ -472,6 +472,7 @@ window.onload = function () {
             if (event.shiftKey && event.key == "Enter") {
               confirmModify();
               event.preventDefault();
+              event.stopImmediatePropagation();
             }
           });
           // 快速打分快捷键
