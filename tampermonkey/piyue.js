@@ -323,18 +323,18 @@ window.onload = function () {
             if (event.key != "Enter") return;
             scoreInput.focus();
           });
-          
+
           document.addEventListener("keydown", (event) => {
-            // Esc every thing blur when no textarea shown           
+            // Esc every thing blur when no textarea shown
             let scoreInput = document.querySelector("#percentageInput");
             if (!isTop(scoreInput)) return;
             if (event.ctrlKey || event.altKey || event.shiftKey) return;
             if (event.key != "Escape") return;
             document.activeElement.blur();
           });
- 
+
           document.addEventListener("keydown", (event) => {
-            // Esc to hide textarea         
+            // Esc to hide textarea
             let modify_area_div = document.getElementById("modify_area_div");
             let ta = modify_area_div.querySelector("textarea#ta");
             if (!isTop(ta)) return;
@@ -344,12 +344,12 @@ window.onload = function () {
             modify_area_div.classList.add("t_hidden");
             document.getElementById("ta_overlay").classList.add("t_hidden");
             let content = document.getElementById("btn_cf_modify").innerHTML;
-            if(content.indexOf("确认创建") != -1){
+            if (content.indexOf("确认创建") != -1) {
               let rows_div = document.getElementById("rows_div");
               rows_div.removeChild(rows_div.lastChild);
             }
           });
- 
+
           document.addEventListener("keydown", (event) => {
             // Space next person
             let el = document.body.querySelector(".bottomdiv a.jb_btn");
@@ -479,6 +479,28 @@ window.onload = function () {
           _addQuickScoreListener();
           // 选中内容快捷键、修改内容快捷键、删除内容快捷键
           _addContentKeyDownListener();
+          
+          // todo 全部加上remove?
+          var undermouseEle;
+          document.addEventListener("mousemove", (event)=>{
+            undermouseEle = document.elementFromPoint(event.clientX, event.clientY);
+          }, { passive: true });
+          // 图片旋转
+          document.addEventListener("keydown", (event) => {
+            if (document.activeElement != document.body) return;
+            if (event.ctrlKey || event.altKey || event.shiftKey) return;
+            if (
+              event.key != "r" ||
+              undermouseEle.tagName.toLowerCase() != "img"
+            )
+              return;
+            if (undermouseEle.currentAngle === undefined)
+              undermouseEle.currentAngle = 0;
+            undermouseEle.currentAngle =
+              (undermouseEle.currentAngle + 90) % 360;
+            undermouseEle.style.transform =
+              "rotate(" + undermouseEle.currentAngle + "deg)";
+          });
           // 新增评语快捷键
           document.addEventListener("keydown", (event) => {
             if (document.activeElement != document.body) return;
@@ -720,7 +742,7 @@ window.onload = function () {
           }
           rerenderComment();
         }
-        function renderCommentSideBar(){
+        function renderCommentSideBar() {
           let body = document.body;
           // find all rowdiv
           let row_divs = body.querySelectorAll("#rows_div .row_div");
@@ -761,7 +783,7 @@ window.onload = function () {
           tacontent = tacontent
             .replace(/\n/g, "</p><p>")
             .replace(/ /g, "&nbsp;");
-          
+
           tacontent = "<p>" + tacontent + "</p>";
           // 将 tacontent 加到body里
           let iframe = document.body.querySelector("#ueditor_0");
@@ -821,7 +843,6 @@ window.onload = function () {
           event2.t_new_comment = true;
           newrow.querySelector(".content_div").dispatchEvent(event2);
         }
-
       })();
     }
   }, 100);
