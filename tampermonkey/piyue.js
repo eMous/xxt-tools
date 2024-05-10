@@ -343,11 +343,11 @@ window.onload = function () {
 
             modify_area_div.classList.add("t_hidden");
             document.getElementById("ta_overlay").classList.add("t_hidden");
-            debugger 
-            let rows_div = document.getElementById("rows_div");
-            rows_div.removeChild(rows_div.lastChild);
-            
-            //rerender();
+            let content = document.getElementById("btn_cf_modify").innerHTML;
+            if(content.contains("确认创建")){
+              let rows_div = document.getElementById("rows_div");
+              rows_div.removeChild(rows_div.lastChild);
+            }
           });
  
           document.addEventListener("keydown", (event) => {
