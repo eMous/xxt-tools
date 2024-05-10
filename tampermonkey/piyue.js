@@ -1,45 +1,4 @@
 window.onload = function () {
-  window.saveMark = (goStep, callback) => {
-	console.log("Hello World!");
-  if (saveLock != 0) {
-		return;
-	}
-	saveLock = 1;
-
-	setCompoundSubjectQuesScore();
-	setCompoundSubjectQuesComment();
-	setMarkLabel();
-
-	var formData = $("#markForm").serialize();
-
-	$.ajax({
-		type : "post",
-		url : "/mooc2-ans/work/saveMark",
-		dataType : "json",
-		data : formData,
-		success : function(data) {
-			if ( !data.status) {
-				$.toast({
-					type : "failure",
-					content : data.msg
-				});
-				saveLock = 0;
-				return false;
-			}
-
-			if (goStep) {
-				callback && callback();
-			} else {
-				$.toast({
-					type : "success",
-					content : "保存成功！"
-				});
-				saveLock = 0;
-			}
-		}
-	});
-}
-
   setInterval(function () {
     let tb = document.getElementById("tb");
     if (!tb) {
@@ -506,6 +465,7 @@ window.onload = function () {
             let btn = body.querySelector("#new_comment_btn");
             if (!isTop(btn)) return;
             event.preventDefault();
+            event.stopImmediatePropagation();
             btn.click();
           });
           // 导入导出快捷键
