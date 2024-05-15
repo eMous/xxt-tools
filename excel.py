@@ -280,7 +280,7 @@ def format_summarysheet(epath: str, style: str):
         for cell in row:
             if cell.value == None:
                 cell.value = 0
-            if cell.value == int(cell.value):
+            if str(cell.value).isdigit():
                 cell.number_format = '0'
             else:
                 cell.number_format = '0.00'
