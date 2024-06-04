@@ -9,6 +9,7 @@ window.onload = function () {
         window.t_scores = [1, 0.95, 0.9, 0.85, 0.82, 0.78, 0.7, 0.65, 0.6, 0];
         window.t_scorekeys = "1234567890";
         let debug = !GM_info;
+        console.log(debug)
         if (debug) {
           // tested in xxt-tools
           // 异步加载拿到 index_template.html 的内容
@@ -47,6 +48,7 @@ window.onload = function () {
           listenerStuff();
           initGlobal();
           initLocalData();
+          console.log("After init LocalData")
         }
         function styleSetting() {
           // set height of #tb to screenheight minus 70px
@@ -379,6 +381,14 @@ window.onload = function () {
           });
         }
         function initGlobal() {
+
+          const test = window.t_fid = document.body
+            .querySelector("#mfid");
+          if(test === null){
+            location.reload();
+          }
+
+
           window.t_fid = document.body
             .querySelector("#mfid")
             .getAttribute("value");
@@ -424,6 +434,7 @@ window.onload = function () {
           window.t_data = JSON.parse(
             localStorage.getItem(window.t_storage_key)
           );
+          console.log(window.t_data)
         }
         function initLocalData() {
           if (window.t_data) {
